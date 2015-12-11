@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<otrs_package version="1.0">
+    <Name>TTO-CIsInIncident</Name>
+    <Framework>5.x</Framework>
+    <Vendor>TTO GmbH</Vendor>
+    <URL>http://tto.de</URL>
+    <Version>1.0.0</Version>
+    <ChangeLog Version="1.0.0">First public release </ChangeLog>
+    <License>GNU GENERAL PUBLIC LICENSE Version 2, June 1991</License>
+    <BuildDate>?</BuildDate>
+    <BuildHost>?</BuildHost>
+    <PackageRequired Version="5.x">ITSM</PackageRequired>
+    <Description Lang="en">Widget that lists CIs in incident on the dashboard.</Description>
+    <Description Lang="de">Widget das CIs im Vorfallsstatus auf dem Dashboard listet.</Description>
+    <Filelist>
+        <File Permission="644" Location="Custom/Kernel/Output/HTML/Templates/Standard/AgentDashboardCIsInIncident.tt"/>
+        <File Permission="644" Location="Custom/Kernel/Output/HTML/Dashboard/CIsInIncident.pm"/>
+        <File Permission="644" Location="Kernel/Config/Files/TTOCIsInIncident.xml"/>
+    </Filelist>
+</otrs_package>
+
