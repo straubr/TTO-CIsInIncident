@@ -1,6 +1,6 @@
 # --
 # Kernel/Output/HTML/Dashboard/CIsInIncident.pm
-# Copyright (C) TTO
+# Copyright (C) TTO 2016, www.tto.de
 # --
 
 package Kernel::Output::HTML::Dashboard::CIsInIncident;
@@ -9,14 +9,9 @@ use strict;
 use warnings;
 use Kernel::System::VariableCheck qw(:all);
 
-our @ObjectDependencies = (
-    'Kernel::System::ITSMConfigItem',
-    'Kernel::System::GeneralCatalog',
-    'Kernel::System::Config',
-    ('Kernel::System::Web::Request'),
-    ('Kernel::Output::HTML::Layout'),
-);
+use Kernel::Language qw(Translatable);
 
+our $ObjectManagerDisabled = 1;
 
 sub new {
     my ( $Type, %Param ) = @_;
@@ -28,12 +23,10 @@ sub new {
     my $ParamObject = $Kernel::OM->Get('Kernel::System::Web::Request');
     my $ConfigObject = $Kernel::OM->Get('Kernel::Config');
     my $SessionObject = $Kernel::OM->Get('Kernel::System::AuthSession');
-    my $UserObject = $Kernel::OM->Get('Kernel::System::User');
 
     # get current filter
     my $Name = $ParamObject->GetParam( Param => 'Name' ) || '';
     my $PreferencesKey = 'UserDashboardCIsInIncidentFilter' . $Self->{Name};
-    
     if ( $Self->{Name} eq $Name ) {
         $Self->{Filter} = $ParamObject->GetParam( Param => 'Filter' ) || '';
     }
@@ -48,14 +41,6 @@ sub new {
             Value     => $Self->{Filter},
         );
 
-        # update preferences
-        if ( !$ConfigObject->Get('DemoSystem') ) {
-            $UserObject->SetPreferences(
-                UserID => $Self->{UserID},
-                Key    => $PreferencesKey,
-                Value  => $Self->{Filter},
-            );
-        }
     }
 
     if ( !$Self->{Filter} ) {
@@ -64,7 +49,8 @@ sub new {
 
     $Self->{PrefKey} = 'UserDashboardPref' . $Self->{Name} . '-Shown';
 
-    $Self->{PageShown} = $Self->{LayoutObject}->{ $Self->{PrefKey} } || $Self->{Config}->{Limit};
+    $Self->{PageShown} = $Kernel::OM->Get('Kernel::Output::HTML::Layout')->{ $Self->{PrefKey} } 
+        || $Self->{Config}->{Limit} || 10;
 
     $Self->{StartHit} = int( $ParamObject->GetParam( Param => 'StartHit' ) || 1 );
 
@@ -78,7 +64,7 @@ sub Preferences {
 
     my @Params = (
         {
-            Desc  => 'Shown',
+            Desc  => Translatable('Shown'),
             Name  => $Self->{PrefKey},
             Block => 'Option',
             Data  => {
@@ -110,14 +96,17 @@ sub Config {
 }
 
 sub _XML_Lookup {
-    my ($XMLData, $Needle) = @_;
-
-    if ($Needle !~ "::") {
-        return $XMLData->{$Needle}->[1]->{Content};
-    } else {
-        my @Remainder = split /::/, $Needle, 2;
-        my $Result = _XML_Lookup ($XMLData->{$Remainder[0]}->[1], $Remainder[1]);
-	return $Result;
+    my ($XMLData, $What) = @_;
+    foreach my $Key ( keys %{ $XMLData } ) {
+        if ( $Key eq $What ) {
+            return $XMLData->{ $Key }->[1]->{Content};
+        }
+        elsif ( ref ($XMLData->{ $Key }) eq 'ARRAY' ) {
+            my $Result = _XML_Lookup ( $XMLData->{ $Key }->[1], $What);
+            if ( $Result ) {
+                return $Result;
+            }
+        }
     }
 }
 
@@ -127,7 +116,7 @@ sub Run {
     my $ConfigItemObject     = $Kernel::OM->Get('Kernel::System::ITSMConfigItem');
     my $GeneralCatalogObject = $Kernel::OM->Get('Kernel::System::GeneralCatalog');
     my $ConfigObject         = $Kernel::OM->Get('Kernel::Config');
-    my $LayoutObject = $Kernel::OM->Get('Kernel::Output::HTML::Layout');
+    my $LayoutObject         = $Kernel::OM->Get('Kernel::Output::HTML::Layout');
 
     # Create Data Object:
     my $Incidents = {};
@@ -153,22 +142,22 @@ sub Run {
     my $Config = $ConfigObject->Get('DashboardBackend');
     my $Filter = $Config->{'1550-CIsInIncident'}->{Filter};
 
-    foreach my $CurrFilter ( sort keys $Filter ) {
-        foreach my $CurrClassID (keys $ClassList) {
+    foreach my $CurrFilter ( sort keys %{ $Filter } ) {
+        foreach my $CurrClassID (keys %{ $ClassList } ) {
             if ($ClassList->{$CurrClassID} eq $CurrFilter) {
                 $Incidents->{$CurrFilter} = {
-		    ClassIDs => [$CurrClassID],
-		    Count => 0,
-		    Data => [],
-		};
- 		delete $ClassList->{$CurrClassID};
-		last;
+        		    ClassIDs => [ $CurrClassID ],
+        		    Count => 0,
+        		    Data => [],
+        		};
+ 		        delete $ClassList->{$CurrClassID};
+        		last;
             }
         }
     }
 
     $Incidents->{"All"} = {
-        ClassIDs => [sort keys %$ClassList ],
+        ClassIDs => [ sort keys %{ $ClassList } ],
         Count => 0,
         Data => [],
     };
@@ -179,7 +168,7 @@ sub Run {
     );
 
     my @IncidentIDs;
-    foreach my $ClassItemID (keys $CMDBIncidentStateList) {
+    foreach my $ClassItemID (keys %{ $CMDBIncidentStateList } ) {
         if ($CMDBIncidentStateList->{$ClassItemID} ne 'Operational'){
             push @IncidentIDs, $ClassItemID;
         }
@@ -191,7 +180,7 @@ sub Run {
         Class   => 'ITSM::CONFIGITEM::DEPLOYMENTSTATE',
     );
     my @DeploymentIDs;
-    foreach my $ClassItemID (keys $CMDBDeploymentStateList) {
+    foreach my $ClassItemID (keys %{ $CMDBDeploymentStateList }) {
         if ($CMDBDeploymentStateList->{$ClassItemID} ne 'Inactive' 
          && $CMDBDeploymentStateList->{$ClassItemID} ne 'Retired' ){
             push @DeploymentIDs, $ClassItemID;
@@ -199,9 +188,9 @@ sub Run {
     }
 
     # Get all CI-IDs in Incident:
-    foreach my $CurrentFilter (keys $Incidents) {
+    foreach my $CurrentFilter (keys %{ $Incidents } ) {
         my $CIIDs = $ConfigItemObject->ConfigItemSearch(
-            ClassIDs     => $Incidents->{$CurrentFilter}->{ClassIDs},
+            ClassIDs     => $Incidents->{ $CurrentFilter }->{ClassIDs},
             InciStateIDs => \@IncidentIDs,
             DeplStateIDs => \@DeploymentIDs,
         );
@@ -212,8 +201,9 @@ sub Run {
         foreach my $ConfigItemID ( @{ $CIIDs }) {
             # get CI data
             my $Data = $ConfigItemObject->ConfigItemGet(
-                ConfigItemID => "$ConfigItemID",
+                ConfigItemID => $ConfigItemID,
             );
+
             # get extended data for the CI Name:
             my $Version = $ConfigItemObject->VersionGet(
                 VersionID  => $Data->{LastVersionID},
@@ -238,12 +228,12 @@ sub Run {
             if ($Attribute) {
                 # Apend custom attribute to name if configured
                 my $VersionData = $Version->{XMLData}->[1]->{Version}->[1];
-		my $Result = _XML_Lookup($VersionData, $Attribute);
-		$Data->{CIName} .= " - " . $Result;
+		        my $Result = _XML_Lookup($VersionData, $Attribute) || "";
+        		$Data->{CIName} .= " - " . $Result;
             }
 
             #remember data and count
-            push $Incidents->{$CurrentFilter}->{Data}, $Data;
+            push @{ $Incidents->{$CurrentFilter}->{Data} }, $Data;
             $Incidents->{$CurrentFilter}->{Count}++;
         }
     }
@@ -266,6 +256,14 @@ sub Run {
     );
 
     $LayoutObject->Block(
+        Name => 'ContentSmallCIsInIncidentFilterRow',
+        Data => {
+            %{ $Self->{Config} },
+            Name => $Self->{Name},
+        },
+    );
+
+    $LayoutObject->Block(
         Name => 'ContentSmallTicketGenericFilterNavBar',
         Data => {
             %{ $Self->{Config} },
@@ -274,16 +272,8 @@ sub Run {
         },
     );
 
-    $LayoutObject->Block(
-        Name => 'ContentSmallCIsInIncidentFilterRow',
-        Data => {
-            %{ $Self->{Config} },
-            Name => $Self->{Name},
-        },
-    );
-
     # One filter per entry in Incidents
-    foreach my $CurrentFilter (sort keys $Incidents) {
+    foreach my $CurrentFilter (sort keys %{ $Incidents }) {
         my $CSSClass = "";
         if ( $Self->{Filter} eq $CurrentFilter) {
 	    $CSSClass = "Selected";
@@ -306,16 +296,31 @@ sub Run {
         );
     }
 
+#    use Data::Dumper;
+#    my $message = "PageShown is: $Self->{Name}";
+#    $Kernel::OM->Get('Kernel::System::Log')->Log(
+#        Priority => 'error',
+#        Message  => $message,
+#    );
+
     # Then one block per CI
-    if (scalar @{ $Incidents->{ $Self->{Filter} }->{Data} } > 0) {
-        foreach my $CurrData (@{ $Incidents->{ $Self->{Filter} }->{Data} } ) {
-            $LayoutObject->Block(
-                Name => 'ContentSmallCIInIncidentRow',
-                Data => $CurrData,
-            );
-        }
+    my $Count = 0;
+    CI:
+    for my $CurrentCI ( @{ $Incidents->{ $Self->{Filter} }->{Data} } ) {
+
+        $Count ++;
+        
+        next CI if !$CurrentCI;
+        next CI if $Count < $Self->{StartHit};
+        last CI if $Count >= ( $Self->{StartHit} + $Self->{PageShown} );
+
+        $LayoutObject->Block(
+            Name => 'ContentSmallCIInIncidentRow',
+            Data => $CurrentCI,
+        );
     }
-    else {
+
+    if ( scalar @{ $Incidents->{ $Self->{Filter} }->{Data} } eq 0 ) {
         $LayoutObject->Block(
             Name => 'ContentSmallCIsInIncidentNone',
         );
@@ -349,5 +354,6 @@ sub Run {
 
     return $Content;
 }
+
 
 1;

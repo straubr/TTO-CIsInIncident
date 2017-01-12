@@ -1,6 +1,6 @@
 # --
 # AgentDashboardCIsInIncident.tt - provides HTML for global dashboard
-# Copyright (C) 2001-2014 OTRS AG, http://otrs.com/
+# Copyright (C) 2017 TTO GmbH, http://www.tto.de
 # --
 # This software comes with ABSOLUTELY NO WARRANTY. For details, see
 # the enclosed file COPYING for license information (AGPL). If you
@@ -38,17 +38,19 @@
 [% RenderBlockStart("ContentSmallCIInIncidentRow") %]
         <tr>
             <td>
-		<div class="Flag Small" style="float:left;margin-top:5px;margin-right:10px;">
-		    <span class="[% Data.InciLED %]"></span>
-	        </div>
-		<a href="[% Data.Link %]" >[% Data.Class | html %] - [% Data.CIName | html %]</a>
+        		<div class="Flag Small" style="float:left;margin-top:5px;margin-right:10px;">
+        		    <span class="[% Data.InciLED %]"></span>
+    	        </div>
+        		<a href="[% Data.Link %]" >
+                    [% Data.Class | html %] - [% Data.CIName | html %]
+                </a>
             </td>
         </tr>
 [% RenderBlockEnd("ContentSmallCIInIncidentRow") %]
 [% RenderBlockStart("ContentSmallCIsInIncidentNone") %]
         <tr>
             <td>
-                [% Translate("All fine - be happy :-)") | html %]
+                [% Translate("none") | html %]
             </td>
         </tr>
 [% RenderBlockEnd("ContentSmallCIsInIncidentNone") %]
