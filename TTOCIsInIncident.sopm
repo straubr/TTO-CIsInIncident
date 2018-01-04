@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <otrs_package version="1.0">
     <Name>TTO-CIsInIncident</Name>
-    <Framework>5.x</Framework>
+    <Framework>6.x</Framework>
     <Vendor>TTO GmbH</Vendor>
     <URL>http://tto.de</URL>
-    <Version>1.0.2</Version>
+    <Version>5.9.9</Version>
     <ChangeLog Version="1.0.2" Date="2017-02-14 16:11:37 UTC+1">Fixed AJAX error on dashboard auto-refresh.</ChangeLog>
     <ChangeLog Version="1.0.1" Date="2017-01-12 16:06:08 UTC+1">Migration to standalone package</ChangeLog>
     <ChangeLog Version="1.0.0">First public release </ChangeLog>
