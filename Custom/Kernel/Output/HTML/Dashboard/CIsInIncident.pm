@@ -1,6 +1,6 @@
 # --
 # Kernel/Output/HTML/Dashboard/CIsInIncident.pm
-# Copyright (C) TTO 2016, www.tto.de
+# Copyright (C) TTO 2016-2018, www.tto.de
 # --
 
 package Kernel::Output::HTML::Dashboard::CIsInIncident;
@@ -295,13 +295,6 @@ sub Run {
             },
         );
     }
-
-#    use Data::Dumper;
-#    my $message = "PageShown is: $Self->{Name}";
-#    $Kernel::OM->Get('Kernel::System::Log')->Log(
-#        Priority => 'error',
-#        Message  => $message,
-#    );
 
     # Then one block per CI
     my $Count = 0;

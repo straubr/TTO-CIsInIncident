@@ -11,13 +11,13 @@
     <License>GNU GENERAL PUBLIC LICENSE Version 2, June 1991</License>
     <BuildDate>?</BuildDate>
     <BuildHost>?</BuildHost>
-    <PackageRequired Version="5.x">ITSM</PackageRequired>
+    <PackageRequired Version="6.x">ITSM</PackageRequired>
     <Description Lang="en">Widget that lists CIs in incident on the dashboard.</Description>
     <Description Lang="de">Widget das CIs im Vorfallsstatus auf dem Dashboard listet.</Description>
     <Filelist>
         <File Permission="644" Location="Custom/Kernel/Output/HTML/Templates/Standard/AgentDashboardCIsInIncident.tt"/>
         <File Permission="644" Location="Custom/Kernel/Output/HTML/Dashboard/CIsInIncident.pm"/>
-        <File Permission="644" Location="Kernel/Config/Files/TTOCIsInIncident.xml"/>
+        <File Permission="644" Location="Kernel/Config/Files/XML/TTOCIsInIncident.xml"/>
     </Filelist>
 </otrs_package>
 
